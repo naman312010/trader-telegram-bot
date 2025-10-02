@@ -2,29 +2,12 @@ import { Context } from "grammy"
 import { SupabaseClient } from '@supabase/supabase-js'
 import { createWallet, fetchTokenDetails } from "./walletAndTokens";
 import { getAddress } from "ethers";
+import { WELCOME_MSG } from "./defaultMessages";
 import 'dotenv/config'
 
 export async function startBot(ctx: Context, supabaseClient: SupabaseClient) {
 
-    const message = `
-👋 Welcome to TraderBot!
-
-I can help you track tokens, holdings, prices, and propose swaps safely through PancakeSwap v3 on Sepolia Base Testnet.
-
-
-🔹 Available Commands:
-  • /registerToken CONTRACT_ADDRESS - Register any token universally (not per user)
-  • /updateHoldings - Update your token holdings (TODO)
-  • /checkPrice SYMBOL - Get current price of a token (auto-registers if new) (TODO)
-  • /checkHoldings - View your holdings with prices (TODO)
-  • /proposeSwap SYMBOL1 AMOUNT1 SYMBOL2 - See what a swap would yield (TODO)
-  • /executeSwap SYMBOL1 AMOUNT1 SYMBOL2 - Perform a token swap (TODO)
-  • /withdraw SYMBOL1 AMOUNT1 - Withdraw your tokens safely (TODO)
-
-⚠️ Safety Note: Never share your private keys or seed phrases. Your funds remain secure with intermediary wallets.
-
-Type any of the commands after getting wallet confirmation to get started 🚀
-`;
+    const message = WELCOME_MSG;
     const user = ctx.from;
     await ctx.reply(message);
     
