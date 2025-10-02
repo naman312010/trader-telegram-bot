@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "commonjs",
+    "lib": ["ES2020","ES2017", "DOM"],
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "rootDir": "src",       
+    "outDir": "dist",       
+    "declaration": true,    
+    "sourceMap": true       
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
