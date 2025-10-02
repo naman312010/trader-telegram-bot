@@ -5,29 +5,29 @@ import { getAddress } from "ethers";
 import 'dotenv/config'
 
 export async function startBot(ctx: Context, supabaseClient: SupabaseClient) {
-    
+
     const message = `
-👋 Welcome to **TraderBot**!
+👋 Welcome to TraderBot!
 
-I can help you track tokens, holdings, prices, and even propose swaps safely through PancakeSwap v3. Here's a quick overview:
+I can help you track tokens, holdings, prices, and propose swaps safely through PancakeSwap v3 on Sepolia Base Testnet.
 
-🔹 **Your Wallet:** You are registered with a secure intermediary wallet. *No private keys or mnemonics are ever requested.*  
 
-🔹 **Available Commands:**
-  • /registerToken <contract_address> – Register any token universally (not per user)  
-  • /updateHoldings – Update your token holdings for registered tokens  
-  • /checkPrice <symbol> – Get current price of a token (auto-registers if new)  
-  • /checkHoldings – View your holdings with prices  
-  • /proposeSwap <Symbol1> <Amount1> <Symbol2> – See what a swap would yield  
-  • /executeSwap <Symbol1> <Amount1> <Symbol2> – Perform a token swap  
-  • /withdraw <Symbol1> <Amount1> – Withdraw your tokens safely  
+🔹 Available Commands:
+  • /registerToken CONTRACT_ADDRESS - Register any token universally (not per user)
+  • /updateHoldings - Update your token holdings (TODO)
+  • /checkPrice SYMBOL - Get current price of a token (auto-registers if new) (TODO)
+  • /checkHoldings - View your holdings with prices (TODO)
+  • /proposeSwap SYMBOL1 AMOUNT1 SYMBOL2 - See what a swap would yield (TODO)
+  • /executeSwap SYMBOL1 AMOUNT1 SYMBOL2 - Perform a token swap (TODO)
+  • /withdraw SYMBOL1 AMOUNT1 - Withdraw your tokens safely (TODO)
 
-⚠️ **Safety Note:** Never share your private keys or seed phrases. Your funds remain secure with intermediary wallets.
+⚠️ Safety Note: Never share your private keys or seed phrases. Your funds remain secure with intermediary wallets.
 
-Type any of the commands above to get started! 🚀
+Type any of the commands after getting wallet confirmation to get started 🚀
 `;
-    await ctx.reply(message, { parse_mode: "Markdown" });
     const user = ctx.from;
+    await ctx.reply(message);
+    
     if (user) {
         if (!user.is_bot) {
 
@@ -41,12 +41,12 @@ Type any of the commands above to get started! 🚀
             }
             if (users) {
                 if (users.length > 0) {
-                    ctx.reply(`Already have wallet: ${users[0].wallet_address}. Welcome back!`)
+                    await ctx.reply(`Already have wallet: ${users[0].wallet_address}. Welcome back!`)
                     return
                 }
             }
-            else {
-                ctx.reply("making trading wallet for trading on Sepolia Base testnet...")
+            
+                await ctx.reply("making trading wallet for trading on Sepolia Base testnet...")
                 const userWallet = createWallet();
                 if (userWallet) {
                     const { error } = await supabaseClient
@@ -79,9 +79,9 @@ Type any of the commands above to get started! 🚀
                         console.log("user not registered Error:", error);
                         throw new Error(`user not registered Error: ${error}`)
                     }
-                    ctx.reply(`Created new wallet at ${userWallet.publicKey}. Please keep it funded to carry out the trades.`);
+                    await ctx.reply(`Created new wallet at ${userWallet.publicKey}. Please keep it funded to carry out the trades.`);
                 }
-            }
+            
         } else return
     }
 }
@@ -94,7 +94,7 @@ export async function registerToken(ctx: Context, supabaseClient: SupabaseClient
         const input = getAddress(addressInput)
         console.log("address", input)
         if (!input) {
-            return ctx.reply("Please provide a token contract address, e.g. /registerToken 0x...");
+            return await ctx.reply("Please provide a token contract address, e.g. /registerToken 0x...");
         }
         const { data: tokens, error: error2 } = await supabaseClient
             .from('crypto_list')
@@ -106,10 +106,10 @@ export async function registerToken(ctx: Context, supabaseClient: SupabaseClient
         }
         if (tokens) {
             if (tokens.length > 0) {
-                ctx.reply(`The token ${tokens[0].name} already being tracked. Use /update to update your holdings`)
+                await ctx.reply(`The token ${tokens[0].name} already being tracked. Use /update to update your holdings`)
                 return
             }
-        } else {
+        } 
 
             const tokenDetails = await fetchTokenDetails(input);
             if (!tokenDetails.name)
@@ -129,16 +129,16 @@ export async function registerToken(ctx: Context, supabaseClient: SupabaseClient
                 console.error("Token insertion Error:", error)
                 throw ("token insertion failed")
             }
-            return ctx.reply(
+            return await ctx.reply(
                 `Token Info:\nName: ${tokenDetails.name}\nSymbol: ${tokenDetails.symbol}\nDecimals: ${tokenDetails.decimals}\nAddress: ${tokenDetails.address} registered`
             );
-        }
+        
     } catch (e) {
         console.error(e);
-        return ctx.reply("Error fetching token info. Make sure the contract address is valid and on Sepolia Base.");
+        return await ctx.reply("Error fetching token info. Make sure the contract address is valid and on Sepolia Base.");
     }
 }
 
 export async function replyMsg(ctx: Context) {
-    ctx.reply("Got another message!")
+    await ctx.reply("Got another message!")
 }
