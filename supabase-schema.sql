@@ -40,11 +40,10 @@ CREATE TABLE public.pending_crypto_transactions (
   CONSTRAINT pending_crypto_transactions_telegram_username_fkey FOREIGN KEY (telegram_username) REFERENCES public.users(telegram_username)
 );
 CREATE TABLE public.user_holdings (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
   wallet_address character varying NOT NULL DEFAULT ''::character varying,
   coin_address character varying NOT NULL,
   amount numeric,
-  CONSTRAINT user_holdings_pkey PRIMARY KEY (id),
+  CONSTRAINT user_holdings_pkey PRIMARY KEY (wallet_address, coin_address),
   CONSTRAINT user_holdings_wallet_address_fkey FOREIGN KEY (wallet_address) REFERENCES public.users(wallet_address),
   CONSTRAINT user_holdings_coin_address_fkey FOREIGN KEY (coin_address) REFERENCES public.crypto_list(contract_address)
 );
