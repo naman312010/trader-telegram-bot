@@ -218,9 +218,11 @@ export async function checkHoldings(ctx: Context, supabaseClient: SupabaseClient
             await ctx.reply("You have no holdings. Try /updateHoldings to update");
             return
         }
+        const symbols = holdings.map((holding)=>holding.crypto_list[0].symbol)
+        const prices = await fetchUSDPricesBySymbol(symbols);
         let op = 'Your last recorded token balances are as follows:';
-        holdings?.map((holding) => {
-            op.concat(`\n${holding.crypto_list[0].symbol}: ${holding.amount}`);
+        holdings?.map((holding, i) => {
+            op.concat(`\n${holding.crypto_list[0].symbol}: ${holding.amount}; Price: ${prices[i].price} `);
         })
         await ctx.reply(op);
     } catch (e) {
