@@ -3,6 +3,8 @@
 Configured for Sepolia Base testnet blockchain
 for encryption I have stored a central master key in env, but you would go for a key store solution like CloudHSM 
 Using multicall3 smart contract for fetching tokens of user
+using pancakeswapv3 smart contracts for swpping
+using pancakeswap public subgraph for finding best pools for the swap
 
 npm run clean → deletes the dist/ folder.
 npm run build → runs the TypeScript compiler (tsc).
@@ -12,7 +14,7 @@ npm run start → runs your compiled main file (bot.js) from dist/.
 ## Infra checklist:
 [o] Supabase backend  
 [o] wallet generation  
-[x] swap interaction  
+[o] swap interaction  
 
 ## Bot usage
 
@@ -27,6 +29,7 @@ npm run start → runs your compiled main file (bot.js) from dist/.
 
 ### TODO
   
+
 
 
 /withdraw Symbol1 Amount1 -> Withdraw the tokens  
