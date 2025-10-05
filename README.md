@@ -2,6 +2,7 @@
 
 Configured for Sepolia Base testnet blockchain
 for encryption I have stored a central master key in env, but you would go for a key store solution like CloudHSM 
+Using multicall3 smart contract for fetching tokens of user
 
 npm run clean → deletes the dist/ folder.
 npm run build → runs the TypeScript compiler (tsc).
@@ -10,7 +11,7 @@ npm run start → runs your compiled main file (bot.js) from dist/.
 
 ## Infra checklist:
 [o] Supabase backend  
-[~] wallet generation  
+[o] wallet generation  
 [x] swap interaction  
 
 ## Bot usage
@@ -21,9 +22,11 @@ npm run start → runs your compiled main file (bot.js) from dist/.
 /checkPrice Symbol -> Fetches price of a registered token on CoinGecko API. If not registered, requests to call /registerToken first for tracking or trading
 /checkHoldings -> Fetches holdings with price of each token
 /updateHoldings -> Updates and fetches holdings (no price)
+/proposeSwap Symbol1 Amount1 Symbol2 -> Checks how much token could be generated from swap of Symbol1 of Amount1 token against Symbol2  
+/executeSwap Symbol1 Amount1 Symbol2 -> Immediately attempts swap  
 
 ### TODO
   
-/proposeSwap Symbol1 Amount1 Symbol2 -> Checks how much token could be generated from swap of Symbol1 of Amount1 token against Symbol2  
-/executeSwap Symbol1 Amount1 Symbol2 -> Immediately attempts swap  
+
+
 /withdraw Symbol1 Amount1 -> Withdraw the tokens  

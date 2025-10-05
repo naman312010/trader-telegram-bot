@@ -1,5 +1,5 @@
 import { Bot } from "grammy"
-import { startBot, replyMsg, insertTokenToRegistry, registerToken, checkPrice, checkHoldings, updateHoldings } from "./botFunctions";
+import { startBot, replyMsg, insertTokenToRegistry, registerToken, checkPrice, checkHoldings, updateHoldings, proposeSwap, executeSwap } from "./botFunctions";
 import * as dotenv from "dotenv";
 dotenv.config();
 import { createClient } from '@supabase/supabase-js'
@@ -45,6 +45,12 @@ bot.command("checkHoldings", async (ctx) => await checkHoldings(ctx, supabaseCli
 
 //update registered token's balances for the user
 bot.command("updateHoldings", async (ctx) => await updateHoldings(ctx, supabaseClient));
+
+//fetches swap quote
+bot.command("proposeSwap", async (ctx) => await proposeSwap(ctx, supabaseClient));
+
+//fetches swap quote
+bot.command("executeSwap", async (ctx) => await executeSwap(ctx, supabaseClient));
 
 // Handle other messages.
 bot.on("message", (ctx) => replyMsg(ctx));

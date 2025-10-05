@@ -1,9 +1,10 @@
 import { Context } from "grammy"
 import { SupabaseClient } from '@supabase/supabase-js'
-import { createWallet, fetchTokenDetails, fetchUSDPricesBySymbol, fetchETHBalance, fetchWalletBalaces } from "./walletAndTokens";
+import { createWallet, fetchTokenDetails, fetchUSDPricesBySymbol, fetchETHBalance, fetchWalletBalaces, quoteSwap, executeSwapOnChain } from "./walletAndTokens";
 import { WELCOME_MSG } from "./defaultMessages";
 import 'dotenv/config'
 import { TokenDetails, } from "./customClasses";
+import { decryptPrivateKey } from "./encrypDecrypt";
 
 async function fetchUserWallet(user_id: string, supabaseClient: SupabaseClient): Promise<string> {
     try {
@@ -36,6 +37,28 @@ async function dbTokensDetailsByAddress(tokens: TokenDetails[], supabaseClient: 
             .from('crypto_list')
             .select('name,contract_address,symbol,decimals')
             .in('contract_address', contract_addresses);
+        if (error2) {
+            console.error("Error whe pre-checkig token")
+            throw new Error(`Error whe pre-checkig token: ${error2}`)
+        }
+        const tokensDetails: TokenDetails[] = tokensData.map((detailsInstance) => new TokenDetails(
+            detailsInstance.contract_address, detailsInstance.name, detailsInstance.symbol, detailsInstance.decimals
+
+        ));
+        return tokensDetails
+    } catch (e) {
+        console.error("Could not perform smart contract registry lookup")
+        throw new Error(`${e}`)
+    }
+}
+
+async function dbTokensDetailsBySymbol(tokenSymbols: string[], supabaseClient: SupabaseClient): Promise<TokenDetails[]> {
+    try {
+        const uppercaseSymbols = tokenSymbols.map((symbol) => symbol.toUpperCase());
+        const { data: tokensData, error: error2 } = await supabaseClient
+            .from('crypto_list')
+            .select('name,contract_address,symbol,decimals')
+            .in('symbol', uppercaseSymbols);
         if (error2) {
             console.error("Error whe pre-checkig token")
             throw new Error(`Error whe pre-checkig token: ${error2}`)
@@ -279,6 +302,84 @@ export async function updateHoldings(ctx: Context, supabaseClient: SupabaseClien
     } catch (e) {
         await ctx.reply(`Ran into an error when checking your holdings: ${e}`)
         return
+    }
+}
+
+export async function proposeSwap(ctx: Context, supabaseClient:SupabaseClient) {
+    try {
+        if (!ctx.message?.text)
+            throw ("")
+        const symbol1 = ctx.message.text.split(" ")[1].toUpperCase();
+        const amountIn = parseFloat(ctx.message.text.split(" ")[2]);
+        const symbol2 = ctx.message.text.split(" ")[3].toUpperCase();
+        if(symbol1 == "ETH" || symbol2 == "ETH"){
+            await ctx.reply("To Trade ETH, wrap first using WETH")
+            return
+        }
+        await ctx.reply("Fetching token details")
+        const tokensDetails = await dbTokensDetailsBySymbol([symbol1, symbol2], supabaseClient);
+        const tokenIn = tokensDetails.find(t => t.symbol === symbol1);
+        const tokenOut = tokensDetails.find(t => t.symbol === symbol2);
+        if(!tokenIn)
+            throw new Error(`${symbol1} is not registered. Please register first using /registerToken`)
+        if(!tokenOut)
+            throw new Error(`${symbol2} is not registered. Please register first using /registerToken`)
+        const quote = await quoteSwap(tokenIn, tokenOut, amountIn.toString());
+        await ctx.reply(`Quote: ${amountIn} ${symbol1} = ${quote} ${symbol2}`)
+
+    } catch (e) {
+        console.error(`Could not perform swap proposal: ${e}`)
+        await ctx.reply(`Could not perform swap proposal: ${e}`);
+    }
+}
+
+export async function executeSwap(ctx: Context, supabaseClient:SupabaseClient) {
+    try {
+        if (!ctx.message?.text)
+            throw ("")
+        const symbol1 = ctx.message.text.split(" ")[1].toUpperCase();
+        const amountIn = parseFloat(ctx.message.text.split(" ")[2]);
+        const symbol2 = ctx.message.text.split(" ")[3].toUpperCase();
+        const { data: wallets, error } = await supabaseClient
+            .from('users')
+            .select(`
+                wallet_address,
+                crypto_wallets (
+                  encrypted_pvt_key,
+                  iv,
+                  auth_tag
+                )`)
+            .eq('id', ctx.from?.id);
+        if (error || !wallets) {
+            await ctx.reply("Error when querying holdings");
+            throw new Error(`${error}`)
+        }
+        if( wallets.length == 0){
+            await ctx.reply("Wallet not found for user");
+            throw new Error(`Wallet not found for user`)
+        }
+        const wallet = wallets[0].crypto_wallets[0];
+        const userPvtKey = await decryptPrivateKey(wallet.encrypted_pvt_key, wallet.iv, wallet.auth_tag);
+        if(symbol1 == "ETH" || symbol2 == "ETH"){
+            await ctx.reply("To Trade ETH, wrap first using WETH")
+            return
+        }
+        const tokensDetails = await dbTokensDetailsBySymbol([symbol1, symbol2], supabaseClient);
+        const tokenIn = tokensDetails.find(t => t.symbol === symbol1);
+        const tokenOut = tokensDetails.find(t => t.symbol === symbol2);
+        if(!tokenIn)
+            throw new Error(`${symbol1} is not registered. Please register first using /registerToken`)
+        if(!tokenOut)
+            throw new Error(`${symbol2} is not registered. Please register first using /registerToken`)
+        
+        const quote = await executeSwapOnChain(tokenIn, tokenOut,userPvtKey, amountIn.toString());
+        await ctx.reply(`Swpped ${amountIn} ${symbol1} for ${quote} ${symbol2}`)
+        await ctx.reply("Updating Holdings...");
+        await updateHoldings(ctx, supabaseClient);
+
+    } catch (e) {
+        console.error(`Could not perform swap execution: ${e}`)
+        await ctx.reply(`Could not perform swap execution: ${e}`);
     }
 }
 

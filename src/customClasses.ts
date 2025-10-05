@@ -12,7 +12,7 @@ export class TokenDetails {
         decimals?: number) {
         this.contract_address = getAddress(address);
         this.name = name ? name : "";
-        this.symbol = symbol ? symbol : "";
+        this.symbol = symbol ? symbol.toUpperCase() : "";
         this.decimals = decimals ? decimals : 0;
     }
 }
